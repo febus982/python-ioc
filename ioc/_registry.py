@@ -14,7 +14,14 @@ class ContainerRegistry:
         return cls._registry.get(module)
 
     @classmethod
-    def wire(
+    def unregister_container(
+        cls,
+        container: Container,
+    ) -> None:
+        cls._registry = {k: v for k, v in cls._registry.items() if v is not container}
+
+    @classmethod
+    def register_container(
         cls,
         container: Container,
         modules: Iterable[str] = tuple(),
@@ -44,7 +51,6 @@ class ContainerRegistry:
 
         # bind container to list of modules/packages
         cls._registry.update(dict.fromkeys(resolved_modules, container))
-        # cls._registry["aaa"] = container
 
     @staticmethod
     def _any_relative_string_imports(modules: Iterable[str]) -> bool:

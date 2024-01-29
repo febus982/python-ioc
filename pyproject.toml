@@ -58,7 +58,7 @@ pymdown-extensions = ">=10.0.1"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 minversion = "6.0"
-addopts = "-n auto --cov-report=term-missing"
+addopts = "-n 0 --cov-report=term-missing"
 testpaths = [
     "tests",
 ]

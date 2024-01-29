@@ -37,13 +37,13 @@ class NonMatchingConcrete:
     ["reference", "target", "exception"],
     [
         # Scenarios where target type matches reference
-        ("str", Concrete(), False),
-        (Concrete, Concrete(), False),
-        (MyInterface, Concrete(), False),
-        (RuntimeProtocol, Concrete(), False),
+        ("str", Concrete(), None),
+        (Concrete, Concrete(), None),
+        (MyInterface, Concrete(), None),
+        (RuntimeProtocol, Concrete(), None),
         (MyProtocol, Concrete(), TypeError),
         # Scenarios where target type doesn't match reference
-        ("str", NonMatchingConcrete(), False),
+        ("str", NonMatchingConcrete(), None),
         (Concrete, NonMatchingConcrete(), TypeError),
         (MyInterface, NonMatchingConcrete(), TypeError),
         (RuntimeProtocol, NonMatchingConcrete(), TypeError),

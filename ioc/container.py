@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from threading import local
-from typing import Any, Dict, Iterator, Type, Union, overload
+from typing import Any, Dict, Iterable, Iterator, Type, Union, overload
 
 from ._interfaces import (
     REFERENCE,
@@ -10,6 +10,7 @@ from ._interfaces import (
 from ._interfaces import (
     Container as AbstractContainer,
 )
+from ._registry import ContainerRegistry
 
 
 class Container(AbstractContainer):
@@ -78,3 +79,17 @@ class Container(AbstractContainer):
         except AttributeError:
             self._scoped_instances.instances = {"singleton": {}}
             return getattr(self._scoped_instances, "instances")
+
+    def wire(
+        self,
+        modules: Iterable[str] = tuple(),
+        packages: Iterable[str] = tuple(),
+    ) -> None:
+        ContainerRegistry.register_container(
+            container=self,
+            modules=modules,
+            packages=packages,
+        )
+
+    def unwire(self) -> None:
+        ContainerRegistry.unregister_container(container=self)

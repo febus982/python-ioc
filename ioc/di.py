@@ -1,9 +1,9 @@
 from functools import wraps
 from inspect import getmodule, iscoroutinefunction, signature, stack
 from types import ModuleType
-from typing import Any, Callable, Iterable, TypeVar, cast
+from typing import Any, Callable, TypeVar, cast
 
-from ._interfaces import REFERENCE, Container
+from ._interfaces import REFERENCE
 from ._registry import ContainerRegistry
 
 REF = TypeVar("REF")
@@ -61,15 +61,3 @@ class Inject:
         # Find the relevant container
         container = ContainerRegistry.get_container(self._source)
         return container.resolve(self._reference) if container else self
-
-
-def wire(
-    container: Container,
-    modules: Iterable[str] = tuple(),
-    packages: Iterable[str] = tuple(),
-) -> None:
-    ContainerRegistry.wire(
-        container,
-        modules,
-        packages,
-    )
