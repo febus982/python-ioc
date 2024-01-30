@@ -4,9 +4,9 @@ from uuid import uuid4
 
 import pytest
 
-from ioc._interfaces import Provider
 from ioc._registry import ContainerRegistry
 from ioc.container import Container
+from ioc.providers import Provider
 
 
 class SomeProvider(Provider):

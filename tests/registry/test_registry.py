@@ -66,7 +66,11 @@ def test_cannot_register_multiple_times_against_same_module():
 
     # Same container
     with pytest.raises(ValueError):
-        ContainerRegistry.register_container(c, modules=("tests.registry.test_registry",))
+        ContainerRegistry.register_container(
+            c, modules=("tests.registry.test_registry",)
+        )
     # Another container
     with pytest.raises(ValueError):
-        ContainerRegistry.register_container(c2, modules=("tests.registry.test_registry",))
+        ContainerRegistry.register_container(
+            c2, modules=("tests.registry.test_registry",)
+        )

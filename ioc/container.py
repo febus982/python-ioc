@@ -3,14 +3,11 @@ from threading import local
 from typing import Any, Dict, Iterable, Iterator, Type, Union, overload
 
 from ._interfaces import (
-    REFERENCE,
-    REFERENCE_TYPE,
-    Provider,
-)
-from ._interfaces import (
     Container as AbstractContainer,
 )
 from ._registry import ContainerRegistry
+from .providers import Provider
+from .providers._interfaces import REFERENCE, REFERENCE_TYPE
 
 
 class Container(AbstractContainer):

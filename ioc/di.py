@@ -3,8 +3,8 @@ from inspect import getmodule, iscoroutinefunction, signature, stack
 from types import ModuleType
 from typing import Any, Callable, TypeVar, cast
 
-from ._interfaces import REFERENCE
 from ._registry import ContainerRegistry
+from .providers._interfaces import REFERENCE
 
 REF = TypeVar("REF")
 F = TypeVar("F", bound=Callable[..., Any])
