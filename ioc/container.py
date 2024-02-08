@@ -7,7 +7,7 @@ from ._interfaces import (
 )
 from ._registry import ContainerRegistry
 from .providers import Provider
-from .providers._interfaces import REFERENCE, REFERENCE_TYPE
+from ._interfaces import REFERENCE, R
 
 
 class Container(AbstractContainer):
@@ -38,7 +38,7 @@ class Container(AbstractContainer):
         ...
 
     @overload
-    def resolve(self, reference: Type[REFERENCE_TYPE]) -> REFERENCE_TYPE:
+    def resolve(self, reference: Type[R]) -> R:
         ...
 
     def resolve(self, reference):

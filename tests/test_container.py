@@ -6,7 +6,7 @@ import pytest
 
 from ioc._registry import ContainerRegistry
 from ioc.container import Container
-from ioc.providers import Provider
+from ioc._interfaces import Provider
 
 
 class SomeProvider(Provider):

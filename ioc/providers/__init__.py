@@ -1,11 +1,12 @@
 from typing import Any, Generic, Optional, Type, TypeVar, overload
 
-from ._interfaces import Provider
+from .._interfaces import Provider
 
 T = TypeVar("T")
 
 
 class ObjectProvider(Generic[T], Provider[T]):
+    __slots__ = '_target',
     _target: Any
 
     @overload
