@@ -6,7 +6,6 @@ from typing import Any, Callable, TypeVar, cast
 from ._types import REFERENCE
 from .registry import _registry
 
-REF = TypeVar("REF")
 F = TypeVar("F", bound=Callable[..., Any])
 
 
