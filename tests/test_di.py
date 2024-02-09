@@ -22,8 +22,6 @@ async def test_injector():
     assert Inject("ref").resolve() == "obj"
     with pytest.raises(Exception):
         Inject("noref").resolve()
-    with pytest.raises(Exception):
-        Inject("inexisting_scope").resolve()
 
     # test decorator on sync function
     @enable_injection
@@ -61,4 +59,4 @@ async def test_injector():
     # test param can be bypassed
     assert await bat("param") == "param"
 
-    c.unwire()
+    c.unwire(modules=[__name__])

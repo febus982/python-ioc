@@ -1,13 +1,12 @@
-from contextlib import contextmanager
-from threading import local
-from typing import Any, Dict, Iterable, Iterator, Type, Union, overload
+from typing import Any, Dict, Iterable, Type, overload
 
+from ._interfaces import REFERENCE, R
 from ._interfaces import (
     Container as AbstractContainer,
 )
-from ._registry import ContainerRegistry
 from .providers import Provider
-from ._interfaces import REFERENCE, R
+from .registry import register_container, unregister_container
+from .scopes import get_scoped_instances
 
 
 class Container(AbstractContainer):
@@ -17,76 +16,56 @@ class Container(AbstractContainer):
     A single container has to be wired to specific python modules/packages.
 
     c = Container()
-    c.bind(ClassInterface, Class, life_scope="singleton")
+    c.bind(ClassInterface, Provider(...), life_scope="singleton")
     """
 
-    _bindings: Dict[REFERENCE, Provider]
-    _scoped_instances: local
-
     def __init__(self):
-        self._bindings = {}
-        self._scoped_instances = local()
+        self.provider_bindings: Dict[REFERENCE, Provider] = {}
 
     def bind(self, binding: Provider) -> None:
-        if self._bindings.get(binding.reference):
+        if binding.reference in self.provider_bindings:
             raise Exception("Binding already registered")
         else:
-            self._bindings[binding.reference] = binding
+            self.provider_bindings[binding.reference] = binding
 
     @overload
-    def resolve(self, reference: str) -> Any:
-        ...
+    def resolve(self, reference: str) -> Any: ...
 
     @overload
-    def resolve(self, reference: Type[R]) -> R:
-        ...
+    def resolve(self, reference: Type[R]) -> R: ...
 
     def resolve(self, reference):
         try:
-            binding = self._bindings[reference]
+            provider = self.provider_bindings[reference]
         except KeyError:
             raise Exception("Binding not found")
 
-        instances = self._get_scoped_instances()
-        if binding.scope:
-            if binding.scope not in instances:
+        if provider.scope:
+            try:
+                instances = get_scoped_instances(provider.scope)
+            except KeyError:
                 raise Exception("Scope not found")
 
-            instance = instances[binding.scope].get(reference)
+            instance = instances.get(reference)
             if not instance:
-                instance = instances[binding.scope][reference] = binding.resolve()
+                instance = instances[reference] = provider.resolve()
 
             return instance
         else:
-            return binding.resolve()
-
-    @contextmanager
-    def scope(self, scope: str) -> Iterator[None]:
-        instances = self._get_scoped_instances()
-        if scope in instances:
-            raise Exception(f"Scope `{scope}` already initialised")
-
-        instances[scope] = {}
-        yield None
-        del instances[scope]
-
-    def _get_scoped_instances(self) -> Dict[Union[str, None], Dict[REFERENCE, Any]]:
-        try:
-            return getattr(self._scoped_instances, "instances")
-        except AttributeError:
-            self._scoped_instances.instances = {"singleton": {}}
-            return getattr(self._scoped_instances, "instances")
+            return provider.resolve()
 
     def wire(
         self,
         modules: Iterable[str] = tuple(),
         packages: Iterable[str] = tuple(),
     ) -> None:
-        ContainerRegistry.register_container(
-            container=self,
-            modules=modules,
-            packages=packages,
-        )
+        register_container(container=self, modules=modules, packages=packages)
+        self.modules = self.modules.union(modules)
+        self.packages = self.packages.union(packages)
 
-    def unwire(self) -> None:
-        ContainerRegistry.unregister_container(container=self)
+    def unwire(
+        self,
+        modules: Iterable[str] = (),
+        packages: Iterable[str] = (),
+    ) -> None:
+        unregister_container(container=self, modules=modules, packages=packages)

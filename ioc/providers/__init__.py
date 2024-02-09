@@ -6,20 +6,18 @@ T = TypeVar("T")
 
 
 class ObjectProvider(Generic[T], Provider[T]):
-    __slots__ = '_target',
-    _target: Any
+    __slots__ = ("target",)
+    target: T
 
     @overload
     def __init__(
         self, reference: str, target: Any, scope: Optional[str] = None
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
         self, reference: Type[T], target: T, scope: Optional[str] = None
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def __init__(self, reference, target, scope=None):
         if isinstance(reference, type) and not isinstance(target, reference):
@@ -30,7 +28,7 @@ class ObjectProvider(Generic[T], Provider[T]):
 
         super().__init__(reference=reference, scope=scope)
 
-        self._target = target
+        self.target = target
 
-    def resolve(self) -> object:
-        return self._target
+    def resolve(self) -> T:
+        return self.target

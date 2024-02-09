@@ -8,19 +8,16 @@ from ioc.providers import ObjectProvider
 
 class MyInterface(ABC):
     @abstractmethod
-    def a(self) -> int:
-        ...
+    def a(self) -> int: ...
 
 
 class MyProtocol(Protocol):
-    def a(self) -> int:
-        ...
+    def a(self) -> int: ...
 
 
 @runtime_checkable
 class RuntimeProtocol(Protocol):
-    def a(self) -> int:
-        ...
+    def a(self) -> int: ...
 
 
 class Concrete(MyInterface):

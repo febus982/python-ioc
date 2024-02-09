@@ -3,8 +3,8 @@ from inspect import getmodule, iscoroutinefunction, signature, stack
 from types import ModuleType
 from typing import Any, Callable, TypeVar, cast
 
-from ._registry import ContainerRegistry
 from ._interfaces import REFERENCE
+from .registry import _registry
 
 REF = TypeVar("REF")
 F = TypeVar("F", bound=Callable[..., Any])
@@ -46,18 +46,24 @@ def enable_injection(f: F) -> F:
 
 class Inject:
     _reference: REFERENCE
-    _source: ModuleType
+    _module: ModuleType
 
     def __init__(self, reference: REFERENCE):
         module = getmodule(stack()[1][0])
         if module is None:
             # Not sure how to test this but getmodule could return None
             raise RuntimeError("Cannot identify source module")  # pragma: no cover
-        self._source = module
+        self._module = module
         self._reference = reference
 
     def resolve(self):
         # Identify in what module the function is called using inspect.stack()
         # Find the relevant container
-        container = ContainerRegistry.get_container(self._source)
-        return container.resolve(self._reference) if container else self
+        # raise Exception(_registry.get((self._module, self._reference), (None,))[0])
+
+        try:
+            provider = _registry[(self._module, self._reference)][0]
+        except KeyError:
+            raise Exception("Reference not wired for module")
+
+        return provider.resolve()

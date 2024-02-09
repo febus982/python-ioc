@@ -4,22 +4,18 @@ from uuid import uuid4
 
 import pytest
 
-from ioc._registry import ContainerRegistry
-from ioc.container import Container
 from ioc._interfaces import Provider
+from ioc.container import Container
+from ioc.scopes import _scoped_instances, run_scope
 
 
 class SomeProvider(Provider):
     def resolve(self) -> Any:
         return uuid4()
 
-    @property
-    def reference(self):
-        return self._reference
-
     def __init__(self, reference, target, scope=None):
         super().__init__(reference=reference, scope=scope)
-        self._target = target
+        self.target = target
 
 
 def test_cannot_bind_twice_the_same_reference():
@@ -35,8 +31,7 @@ def test_cannot_bind_twice_the_same_reference():
         c.bind(
             SomeProvider(
                 "scoped",
-                "unused_var",
-                "some_scope",
+                "another_var",
             ),
         )
 
@@ -48,10 +43,9 @@ def test_resolving_not_existing_binding_raises_exception():
 
 
 def test_cannot_initialise_same_scope_twice():
-    c = Container()
-    with c.scope("some_scope"):
+    with run_scope("some_scope"):
         with pytest.raises(Exception):
-            with c.scope("some_scope"):
+            with run_scope("some_scope"):
                 pass
 
 
@@ -66,15 +60,15 @@ def test_scoped_bindings_are_singleton_during_scope_life():
     )
 
     with pytest.raises(Exception):
-        assert "some_scope" not in c._get_scoped_instances()
+        assert "some_scope" not in _scoped_instances.__dict__
         c.resolve("scoped")
 
-    with c.scope("some_scope"):
-        assert "some_scope" in c._get_scoped_instances()
+    with run_scope("some_scope"):
+        assert "some_scope" in _scoped_instances.__dict__
         assert c.resolve("scoped") is c.resolve("scoped")
 
     with pytest.raises(Exception):
-        assert "some_scope" not in c._get_scoped_instances()
+        assert "some_scope" not in _scoped_instances.__dict__
         c.resolve("scoped")
 
 
@@ -92,10 +86,8 @@ def test_singleton_scope_is_always_active():
 
 
 def test_cannot_manually_execute_singleton_scope():
-    c = Container()
-
     with pytest.raises(Exception):
-        with c.scope("singleton"):
+        with run_scope("singleton"):
             pass
 
 
@@ -116,8 +108,8 @@ def test_wire_registers_container_in_registry():
     modules = ("random_module",)
     packages = ("random_packages",)
 
-    with patch.object(
-        ContainerRegistry, "register_container", return_value=None
+    with patch(
+        "ioc.container.register_container", return_value=None
     ) as mock_register_container:
         c.wire(modules=modules, packages=packages)
 
@@ -129,9 +121,11 @@ def test_wire_registers_container_in_registry():
 def test_unwire_unregisters_container_from_registry():
     c = Container()
 
-    with patch.object(
-        ContainerRegistry, "unregister_container", return_value=None
+    with patch(
+        "ioc.container.unregister_container", return_value=None
     ) as mock_unregister_container:
         c.unwire()
 
-    mock_unregister_container.assert_called_once_with(container=c)
+    mock_unregister_container.assert_called_once_with(
+        container=c, modules=(), packages=()
+    )

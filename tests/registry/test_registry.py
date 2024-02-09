@@ -2,75 +2,87 @@ import sys
 
 import pytest
 
-from ioc._registry import ContainerRegistry
 from ioc.container import Container
+from ioc.providers import ObjectProvider
+from ioc.registry import _registry, register_container, unregister_container
 
 
 def test_container_registration_processes_to_single_module():
-    assert ContainerRegistry.get_container(sys.modules[__name__]) is None
-    assert sys.modules[__name__] not in ContainerRegistry._registry.keys()
-
     c = Container()
-    ContainerRegistry.register_container(c, modules=(__name__,))
-    assert ContainerRegistry.get_container(sys.modules[__name__]) is c
-    assert sys.modules[__name__] in ContainerRegistry._registry.keys()
+    provider = ObjectProvider(
+        "ref",
+        "value",
+    )
+    c.bind(provider)
 
-    ContainerRegistry.unregister_container(c)
-    assert ContainerRegistry.get_container(sys.modules[__name__]) is None
-    assert sys.modules[__name__] not in ContainerRegistry._registry.keys()
+    assert (sys.modules[__name__], "ref") not in _registry
+
+    register_container(c, modules=(__name__,))
+    assert (sys.modules[__name__], "ref") in _registry
+    assert _registry[(sys.modules[__name__], "ref")] == (provider, c)
+
+    unregister_container(c, modules=(__name__,))
+    assert (sys.modules[__name__], "ref") not in _registry
 
 
 def test_container_registration_processes_navigates_packages():
-    assert ContainerRegistry.get_container(sys.modules[__name__]) is None
-    assert sys.modules[__name__] not in ContainerRegistry._registry.keys()
-    assert sys.modules["tests.registry"] not in ContainerRegistry._registry.keys()
-
     c = Container()
-    ContainerRegistry.register_container(c, packages=("tests.registry",))
-    assert ContainerRegistry.get_container(sys.modules[__name__]) is c
-    assert sys.modules[__name__] in ContainerRegistry._registry.keys()
-    assert sys.modules["tests.registry"] in ContainerRegistry._registry.keys()
+    provider = ObjectProvider(
+        "ref",
+        "value",
+    )
+    c.bind(provider)
 
-    ContainerRegistry.unregister_container(c)
-    assert ContainerRegistry.get_container(sys.modules[__name__]) is None
-    assert sys.modules[__name__] not in ContainerRegistry._registry.keys()
-    assert sys.modules["tests.registry"] not in ContainerRegistry._registry.keys()
+    assert (sys.modules[__name__], "ref") not in _registry
+    assert (sys.modules["tests.registry"], "ref") not in _registry
+
+    register_container(c, packages=("tests.registry",))
+
+    assert (sys.modules[__name__], "ref") in _registry
+    assert (sys.modules["tests.registry"], "ref") in _registry
+
+    unregister_container(c, packages=("tests.registry",))
+
+    assert (sys.modules[__name__], "ref") not in _registry
+    assert (sys.modules["tests.registry"], "ref") not in _registry
 
 
 def test_container_registration_processes_doesnt_navigate_single_modules():
-    assert ContainerRegistry.get_container(sys.modules[__name__]) is None
-    assert sys.modules[__name__] not in ContainerRegistry._registry.keys()
-
     c = Container()
-    ContainerRegistry.register_container(c, packages=(__name__,))
-    assert ContainerRegistry.get_container(sys.modules[__name__]) is c
-    assert sys.modules[__name__] in ContainerRegistry._registry.keys()
+    provider = ObjectProvider(
+        "ref",
+        "value",
+    )
+    c.bind(provider)
 
-    ContainerRegistry.unregister_container(c)
-    assert ContainerRegistry.get_container(sys.modules[__name__]) is None
-    assert sys.modules[__name__] not in ContainerRegistry._registry.keys()
+    assert (sys.modules[__name__], "ref") not in _registry
+
+    register_container(c, packages=(__name__,))
+    assert (sys.modules[__name__], "ref") in _registry
+    assert _registry[(sys.modules[__name__], "ref")] == (provider, c)
+
+    unregister_container(c, packages=(__name__,))
+    assert (sys.modules[__name__], "ref") not in _registry
 
 
 def test_relative_imports_are_not_allowed():
     c = Container()
     with pytest.raises(ImportError):
-        ContainerRegistry.register_container(c, modules=("..tests",))
+        register_container(c, modules=("..tests",))
     with pytest.raises(ImportError):
-        ContainerRegistry.register_container(c, packages=("..tests",))
+        register_container(c, packages=("..tests",))
 
 
 def test_cannot_register_multiple_times_against_same_module():
     c = Container()
     c2 = Container()
-    ContainerRegistry.register_container(c, modules=("tests.registry.test_registry",))
+    c.bind(ObjectProvider("test", "result"))
+    c2.bind(ObjectProvider("test", "result2"))
+    register_container(c, modules=(__name__,))
 
     # Same container
     with pytest.raises(ValueError):
-        ContainerRegistry.register_container(
-            c, modules=("tests.registry.test_registry",)
-        )
+        register_container(c, modules=(__name__,))
     # Another container
     with pytest.raises(ValueError):
-        ContainerRegistry.register_container(
-            c2, modules=("tests.registry.test_registry",)
-        )
+        register_container(c2, modules=(__name__,))
