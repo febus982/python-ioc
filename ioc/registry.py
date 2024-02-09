@@ -1,24 +1,12 @@
-from contextlib import contextmanager
 from importlib import import_module
 from pkgutil import walk_packages
-from threading import local
 from types import ModuleType
-from typing import Dict, Iterable, Iterator, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
-from ioc._interfaces import REFERENCE, Container, Provider
+from ioc._abstract import Container, Provider
+from ioc._types import REFERENCE
 
 _registry: Dict[Tuple[ModuleType, REFERENCE], Tuple[Provider, Container]] = {}
-_scoped_instances: local = local()
-
-
-@contextmanager
-def scope(scope: str) -> Iterator[None]:
-    if scope in _scoped_instances.__dict__:
-        raise Exception(f"Scope `{scope}` already initialised")
-
-    _scoped_instances.__dict__[scope] = {}
-    yield None
-    del _scoped_instances.__dict__[scope]
 
 
 def register_container(

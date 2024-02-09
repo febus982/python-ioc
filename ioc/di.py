@@ -3,7 +3,7 @@ from inspect import getmodule, iscoroutinefunction, signature, stack
 from types import ModuleType
 from typing import Any, Callable, TypeVar, cast
 
-from ._interfaces import REFERENCE
+from ._types import REFERENCE
 from .registry import _registry
 
 REF = TypeVar("REF")
@@ -66,4 +66,4 @@ class Inject:
         except KeyError:
             raise Exception("Reference not wired for module")
 
-        return provider.resolve()
+        return provider._resolve()

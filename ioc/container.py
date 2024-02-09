@@ -1,12 +1,11 @@
 from typing import Any, Dict, Iterable, Type, overload
 
-from ._interfaces import REFERENCE, R
-from ._interfaces import (
+from ._abstract import (
     Container as AbstractContainer,
 )
+from ._types import REFERENCE, R
 from .providers import Provider
 from .registry import register_container, unregister_container
-from .scopes import get_scoped_instances
 
 
 class Container(AbstractContainer):
@@ -40,19 +39,7 @@ class Container(AbstractContainer):
         except KeyError:
             raise Exception("Binding not found")
 
-        if provider.scope:
-            try:
-                instances = get_scoped_instances(provider.scope)
-            except KeyError:
-                raise Exception("Scope not found")
-
-            instance = instances.get(reference)
-            if not instance:
-                instance = instances[reference] = provider.resolve()
-
-            return instance
-        else:
-            return provider.resolve()
+        return provider.resolve()
 
     def wire(
         self,

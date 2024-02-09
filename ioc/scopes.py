@@ -1,28 +1,24 @@
 from contextlib import contextmanager
-from threading import local
-from typing import Any, Dict, Iterator, Union
+from typing import Iterator, List
 
-from ioc._interfaces import REFERENCE
+from ioc._signals import scope_terminated
 
-_scoped_instances = local()
+_scope_registry: List[str] = ["singleton"]
 
 
 @contextmanager
 def run_scope(scope: str) -> Iterator[None]:
-    instances = _scoped_instances.__dict__
-    if scope in instances:
+    if scope == "singleton":
+        raise RuntimeError(f"Scope {scope} cannot be initialised manually")
+
+    if scope in _scope_registry:
         raise Exception(f"Scope `{scope}` already initialised")
 
-    instances[scope] = {}
+    _scope_registry.append(scope)
     yield None
-    if scope != "singleton":
-        del instances[scope]
+    _scope_registry.remove(scope)
+    scope_terminated.send(scope)
 
 
-def get_scoped_instances(scope: str) -> Dict[Union[str, None], Dict[REFERENCE, Any]]:
-    try:
-        return _scoped_instances.__dict__[scope]
-    except KeyError:
-        if scope == "singleton":
-            _scoped_instances.__dict__[scope] = {}
-        return _scoped_instances.__dict__[scope]
+def is_scope_running(scope: str) -> bool:
+    return scope in _scope_registry

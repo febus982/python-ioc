@@ -4,7 +4,7 @@ from ioc.providers import Provider
 
 
 class SomeProvider(Provider):
-    def resolve(self) -> Any:
+    def _resolve(self) -> Any:
         return None
 
     def __init__(self, reference, scope=None):

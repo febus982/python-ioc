@@ -1,6 +1,6 @@
 from typing import Any, Generic, Optional, Type, TypeVar, overload
 
-from .._interfaces import Provider
+from .._abstract import Provider
 
 T = TypeVar("T")
 
@@ -30,5 +30,5 @@ class ObjectProvider(Generic[T], Provider[T]):
 
         self.target = target
 
-    def resolve(self) -> T:
+    def _resolve(self) -> T:
         return self.target

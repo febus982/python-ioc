@@ -55,4 +55,4 @@ def test_object_provider_raises_exception_if_target_and_reference_not_match(
             ObjectProvider(reference, target)
     else:
         binding = ObjectProvider(reference, target)
-        assert binding.resolve() is target
+        assert binding._resolve() is target
