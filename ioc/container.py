@@ -4,7 +4,7 @@ from ._abstract import (
     Container as AbstractContainer,
 )
 from ._types import REFERENCE, R
-from .providers import Provider
+from ._abstract import Provider
 from .registry import register_container, unregister_container
 
 

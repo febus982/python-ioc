@@ -1,6 +1,6 @@
 from typing import Any
 
-from ioc.providers import Provider
+from ioc._abstract import Provider
 
 
 class SomeProvider(Provider):
