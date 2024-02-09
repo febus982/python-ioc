@@ -1,3 +1,4 @@
+import logging
 from importlib import import_module
 from pkgutil import walk_packages
 from types import ModuleType
@@ -31,7 +32,7 @@ def register_container(
         # There might be multiple ones, but we're happy to return only one
         wired_reference = next(iter(intersection))
         raise ValueError(
-            f"The reference {wired_reference[1]} is already wired"
+            f"The reference `{wired_reference[1]}` is already wired"
             f" to module `{wired_reference[0].__name__}`."
         )
 
@@ -68,6 +69,10 @@ def unregister_container(
         for reference, provider in container.provider_bindings.items():
             if _registry.get((module, reference)) == (provider, container):
                 del _registry[(module, reference)]
+            else:
+                logging.warning(f"Ignored attempt to unregister reference {reference}"
+                                f" for module {module} using a different container"
+                                f"than the one used to initialize it")
 
 
 def _any_relative_string_imports(modules: Iterable[str]) -> bool:
