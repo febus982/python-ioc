@@ -8,7 +8,7 @@ from ioc.providers import ObjectProvider
 async def test_injector():
     # Not nice but we do all in a single test
     # to make sure we don't wire multiple times
-    # if tests run in parallel
+    # against this module if tests run in parallel
     c = Container()
     c.bind(
         ObjectProvider(

@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pytest
 
 from ioc.scopes import _scope_registry, is_scope_running, run_scope
@@ -38,3 +40,14 @@ def test_cannot_manually_execute_singleton_scope():
     # Scope is still initialised
     assert "singleton" in _scope_registry
     assert is_scope_running("singleton") is True
+
+
+def test_is_scope_running():
+    scope = str(uuid4())
+    assert is_scope_running(scope) is False
+    assert scope not in _scope_registry
+    with run_scope(scope):
+        assert is_scope_running(scope) is True
+        assert scope in _scope_registry
+    assert is_scope_running(scope) is False
+    assert scope not in _scope_registry
