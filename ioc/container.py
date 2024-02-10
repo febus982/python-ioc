@@ -3,8 +3,8 @@ from typing import Any, Dict, Iterable, Type, overload
 from ._abstract import (
     Container as AbstractContainer,
 )
-from ._types import REFERENCE, R
 from ._abstract import Provider
+from ._types import REFERENCE, R
 from .registry import register_container, unregister_container
 
 
@@ -17,15 +17,20 @@ class Container(AbstractContainer):
     c = Container()
     c.bind(ClassInterface, Provider(...), life_scope="singleton")
     """
+    __slots__ = "provider_bindings"
+    provider_bindings: Dict[REFERENCE, Provider]
 
     def __init__(self):
-        self.provider_bindings: Dict[REFERENCE, Provider] = {}
+        self.provider_bindings = {}
 
-    def bind(self, binding: Provider) -> None:
-        if binding.reference in self.provider_bindings:
+    def bind(self, provider: Provider) -> None:
+        if provider.reference in self.provider_bindings:
             raise Exception("Binding already registered")
-        else:
-            self.provider_bindings[binding.reference] = binding
+
+        if provider.supports_provider_dependencies:
+            provider.validate_nested_dependencies(self)
+
+        self.provider_bindings[provider.reference] = provider
 
     @overload
     def resolve(self, reference: str) -> Any: ...
@@ -34,12 +39,15 @@ class Container(AbstractContainer):
     def resolve(self, reference: Type[R]) -> R: ...
 
     def resolve(self, reference):
+        return self.provide(reference).resolve()
+
+    def provide(self, reference) -> Provider:
         try:
             provider = self.provider_bindings[reference]
         except KeyError:
             raise Exception("Binding not found")
 
-        return provider.resolve()
+        return provider
 
     def wire(
         self,

@@ -12,6 +12,9 @@ class SomeProvider(Provider):
     def _resolve(self) -> Any:
         return uuid4()
 
+    def validate_nested_dependencies(self, container: Container) -> None:
+        pass
+
     def __init__(self, reference, target, scope=None):
         super().__init__(reference=reference, scope=scope)
         self.target = target

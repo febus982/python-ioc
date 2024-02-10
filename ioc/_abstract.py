@@ -20,12 +20,14 @@ class Provider(Generic[R], ABC):
         "scope",
         "reference",
         "thread_safe",
+        "supports_provider_dependencies",
         "_scoped_instance",
         "_threadlocal_instance",
     )
     scope: Optional[str]
     reference: REFERENCE
     thread_safe: bool
+    supports_provider_dependencies: bool
     _scoped_instance: Optional[R]
     _threadlocal_instance: local
 
@@ -39,6 +41,7 @@ class Provider(Generic[R], ABC):
         self.reference = reference
         self.scope = scope
         self.thread_safe = thread_safe
+        self.supports_provider_dependencies = False
         self._cleanup_scopes()
 
         if scope is not None:
@@ -72,6 +75,9 @@ class Provider(Generic[R], ABC):
         self._scoped_instance = None
 
     @abstractmethod
+    def validate_nested_dependencies(self, container: "Container") -> None: ...
+
+    @abstractmethod
     def _resolve(self) -> R: ...
 
 
@@ -91,3 +97,6 @@ class Container(ABC):
 
     @abstractmethod
     def resolve(self, reference): ...
+
+    @abstractmethod
+    def provide(self, reference: REFERENCE) -> Provider: ...

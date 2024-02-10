@@ -4,13 +4,16 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from ioc._abstract import Provider
+from ioc._abstract import Container, Provider
 from ioc.scopes import is_scope_running, run_scope
 
 
 class SomeProvider(Provider):
     def _resolve(self) -> Any:
         return uuid4()
+
+    def validate_nested_dependencies(self, container: Container) -> None:
+        pass
 
     def __init__(
         self,
