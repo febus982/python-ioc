@@ -1,8 +1,74 @@
+from abc import ABC
+
 import pytest
 
 from ioc.container import Container
-from ioc.di import Inject, enable_injection
-from ioc.providers import ObjectProvider
+from ioc.di import Require, inject
+from ioc.providers import Factory, FactoryProvider, ObjectProvider
+
+
+class Interface(ABC):
+    pass
+
+
+class Concrete(Interface):
+    pass
+
+
+class Concrete2(Interface):
+    pass
+
+
+async def test_inject_using_interface():
+    c = Container()
+    c.bind(
+        FactoryProvider(
+            Interface,
+            Factory(
+                callable=Concrete
+            )
+        ),
+    )
+    c.wire(modules=[__name__])
+
+    # Fake injector to test Inject default has precedence
+    # over the typing
+    fake_inject = Require(Interface)
+    fake_inject.resolve = lambda: 5
+
+    # test decorator on sync function
+    @inject
+    def foo(
+        param: Interface,
+        param2: Interface = fake_inject,
+        param3: Interface = Require(Interface),
+        param4: Interface = Concrete2(),
+    ):
+        return param, param2, param3, param4
+
+    assert isinstance(foo()[0], Concrete)
+    assert foo()[1] == 5
+    assert isinstance(foo()[2], Concrete)
+    assert isinstance(foo()[3], Concrete2)
+    # Check manual params have priority
+    assert foo(param=1, param2=2, param3=3, param4=4) == (1, 2, 3, 4)
+
+    # test decorator on coroutine function
+    @inject
+    async def foo(
+        param: Interface,
+        param2: Interface = fake_inject,
+        param3: Interface = Require(Interface),
+        param4: Interface = Concrete2(),
+    ):
+        return param, param2, param3, param4
+
+    assert isinstance((await foo())[0], Concrete)
+    assert (await foo())[1] == 5
+    assert isinstance((await foo())[2], Concrete)
+    assert isinstance((await foo())[3], Concrete2)
+    # Check manual params have priority
+    assert await foo(param=1, param2=2, param3=3, param4=4) == (1, 2, 3, 4)
 
 
 async def test_injector():
@@ -19,13 +85,13 @@ async def test_injector():
     c.wire(modules=[__name__])
 
     # Test manual Inject resolution
-    assert Inject("ref").resolve() == "obj"
+    assert Require("ref").resolve() == "obj"
     with pytest.raises(Exception):
-        Inject("noref").resolve()
+        Require("noref").resolve()
 
     # test decorator on sync function
-    @enable_injection
-    def foo(param: str = Inject("ref")):
+    @inject
+    def foo(param: str = Require("ref")):
         return param
 
     assert foo() == "obj"
@@ -33,17 +99,17 @@ async def test_injector():
     assert foo("param") == "param"
 
     # test without decorator on sync function
-    def bar(param: str = Inject("ref")):
+    def bar(param: str = Require("ref")):
         return param
 
     assert bar() != "obj"
-    assert isinstance(bar(), Inject)
+    assert isinstance(bar(), Require)
     # test param can be bypassed
     assert bar("param") == "param"
 
     # test with decorator on async function
-    @enable_injection
-    async def baz(param: str = Inject("ref")):
+    @inject
+    async def baz(param: str = Require("ref")):
         return param
 
     assert await baz() == "obj"
@@ -51,11 +117,11 @@ async def test_injector():
     assert await baz("param") == "param"
 
     # test without decorator on async function
-    async def bat(param: str = Inject("ref")):
+    async def bat(param: str = Require("ref")):
         return param
 
     assert await bat() != "obj"
-    assert isinstance((await bat()), Inject)
+    assert isinstance((await bat()), Require)
     # test param can be bypassed
     assert await bat("param") == "param"
 

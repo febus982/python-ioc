@@ -1,5 +1,5 @@
 from functools import wraps
-from inspect import getmodule, iscoroutinefunction, signature, stack
+from inspect import _empty, getmodule, iscoroutinefunction, signature, stack
 from types import ModuleType
 from typing import Any, Callable, TypeVar, cast
 
@@ -9,41 +9,53 @@ from .registry import _registry
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-def enable_injection(f: F) -> F:
+def _inject_dependencies(f: F, *args, **kwargs):
+    module = getmodule(f)
+    if module is None:
+        # Not sure how to test this but getmodule could return None
+        raise RuntimeError("Cannot identify source module")  # pragma: no cover
     sig = signature(f)
 
-    if iscoroutinefunction(f):
+    for i, key in enumerate(sig.parameters.keys()):
+        # Skip positional args, they have a value
+        if i < len(args):
+            continue
 
+        if all([
+            key not in kwargs,  # Has not been passed
+            sig.parameters[key].default is _empty,  # Has no default
+            (module, sig.parameters[key].annotation) in _registry
+        ]):
+            kwargs[key] = _registry[
+                (module, sig.parameters[key].annotation)
+            ][0].resolve()
+
+    bound = sig.bind(*args, **kwargs)
+    bound.apply_defaults()
+    return [
+        x.resolve() if isinstance(x, Require) else x
+        for x in bound.args
+    ], {
+        k: (v.resolve() if isinstance(v, Require) else v)
+        for (k, v) in bound.kwargs.items()
+    }
+
+
+def inject(f: F, p=None) -> F:
+    if iscoroutinefunction(f):
         @wraps(f)  # type: ignore
         async def wrapper(*args, **kwargs):
-            bound = sig.bind(*args, **kwargs)
-            bound.apply_defaults()
-            return await f(
-                *[x.resolve() if isinstance(x, Inject) else x for x in bound.args],
-                **{
-                    k: (v.resolve() if isinstance(v, Inject) else v)
-                    for (k, v) in bound.kwargs.items()
-                }
-            )
-
+            args, kwargs = _inject_dependencies(f, *args, **kwargs)
+            return await f(*args, **kwargs)
     else:
-
         @wraps(f)
         def wrapper(*args, **kwargs):
-            bound = sig.bind(*args, **kwargs)
-            bound.apply_defaults()
-            return f(
-                *[x.resolve() if isinstance(x, Inject) else x for x in bound.args],
-                **{
-                    k: (v.resolve() if isinstance(v, Inject) else v)
-                    for (k, v) in bound.kwargs.items()
-                }
-            )
-
+            args, kwargs = _inject_dependencies(f, *args, **kwargs)
+            return f(*args, **kwargs)
     return cast(F, wrapper)
 
 
-class Inject:
+class Require:
     _reference: REFERENCE
     _module: ModuleType
 
@@ -65,4 +77,4 @@ class Inject:
         except KeyError:
             raise Exception("Reference not wired for module")
 
-        return provider._resolve()
+        return provider.resolve()
