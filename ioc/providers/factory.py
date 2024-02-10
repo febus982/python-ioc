@@ -15,18 +15,18 @@ from .._types import R
 
 
 class Factory(Generic[R]):
-    __slots__ = "factory", "args", "kwargs"
-    factory: Callable[..., R]
+    __slots__ = "callable", "args", "kwargs"
+    callable: Callable[..., R]
     args: Iterable[Any]
     kwargs: Dict[str, Any]
 
     def __init__(
         self,
-        factory: Callable[..., R],
+        callable: Callable[..., R],
         args: Optional[Iterable[Any]] = None,
         kwargs: Optional[Dict[str, Any]] = None,
     ):
-        self.factory = factory
+        self.callable = callable
         self.args = args or ()
         self.kwargs = kwargs or {}
 
@@ -59,7 +59,7 @@ class FactoryProvider(Generic[R], Provider[R]):
         self.supports_provider_dependencies = True
 
     def _resolve(self) -> R:
-        return self.factory.factory(
+        return self.factory.callable(
             *[
                 (x.resolve() if isinstance(x, Provider) else x)
                 for x in self.factory.args

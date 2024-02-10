@@ -27,14 +27,14 @@ def test_container_allows_binding_only_if_dependencies_are_registered():
     f = FactoryProvider(
         "ref2",
         Factory(
-            factory=some_func,
+            callable=some_func,
             args=(o,),
         ),
     )
     f2 = FactoryProvider(
         "ref3",
         Factory(
-            factory=some_func,
+            callable=some_func,
             kwargs={"a": o},
         ),
     )
@@ -55,7 +55,7 @@ def test_factory_without_dependencies_are_registered():
     c = Container()
     f = FactoryProvider(
         "ref",
-        Factory(factory=lambda: 1, ),
+        Factory(callable=lambda: 1, ),
     )
     c.bind(f)
     assert c.provide("ref") is f
@@ -66,11 +66,11 @@ def test_factory_resolution():
     o = ObjectProvider("ref", "scope")
     factory_function = FactoryProvider(
         "ref2",
-        Factory(factory=some_func, args=(o,)),
+        Factory(callable=some_func, args=(o,)),
     )
     factory_class = FactoryProvider(
         MyClassInterface,
-        Factory(factory=MyClass, args=(o,)),
+        Factory(callable=MyClass, args=(o,)),
     )
     c.bind(o)
     c.bind(factory_function)
