@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Iterable, Optional, Type, overload
+from typing import Any, Callable, Iterable, Optional, Type, overload
 
 from ._abstract import (
     Container as AbstractContainer,

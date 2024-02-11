@@ -11,7 +11,6 @@ from typing import (
 )
 
 from .._abstract import Container, Provider
-from .._signals import scope_terminated
 from .._types import R
 
 

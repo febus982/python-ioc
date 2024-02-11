@@ -6,7 +6,7 @@ import pytest
 
 from ioc._abstract import Provider
 from ioc.container import Container
-from ioc.providers import ObjectProvider, FactoryProvider
+from ioc.providers import FactoryProvider, ObjectProvider
 
 
 class SomeProvider(Provider):

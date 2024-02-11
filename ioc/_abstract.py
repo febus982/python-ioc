@@ -2,12 +2,13 @@ from abc import ABC, abstractmethod
 from threading import local
 from typing import (
     Any,
+    Callable,
     Dict,
     Generic,
     Optional,
     Set,
     Type,
-    overload, Callable,
+    overload,
 )
 
 from ._signals import scope_terminated
