@@ -11,6 +11,7 @@ from typing import (
 )
 
 from .._abstract import Container, Provider
+from .._signals import scope_terminated
 from .._types import R
 
 
@@ -57,6 +58,9 @@ class FactoryProvider(Generic[R], Provider[R]):
         super().__init__(reference=reference, scope=scope, thread_safe=thread_safe)
         self.factory = factory
         self.needs_nested_providers_check = True
+
+        if scope is not None:
+            scope_terminated.connect(self._cleanup_scopes, sender=scope)
 
     def _resolve(self) -> R:
         return self.factory.callable(

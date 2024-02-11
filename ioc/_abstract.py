@@ -44,9 +44,6 @@ class Provider(Generic[R], ABC):
         self.needs_nested_providers_check = False
         self._cleanup_scopes()
 
-        if scope is not None:
-            scope_terminated.connect(self._cleanup_scopes, sender=scope)
-
     def resolve(self) -> R:
         if self.scope:
             if not is_scope_running(self.scope):
