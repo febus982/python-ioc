@@ -20,14 +20,14 @@ class Provider(Generic[R], ABC):
         "scope",
         "reference",
         "thread_safe",
-        "supports_provider_dependencies",
+        "needs_nested_providers_check",
         "_scoped_instance",
         "_threadlocal_instance",
     )
     scope: Optional[str]
     reference: REFERENCE
     thread_safe: bool
-    supports_provider_dependencies: bool
+    needs_nested_providers_check: bool
     _scoped_instance: Optional[R]
     _threadlocal_instance: local
 
@@ -41,7 +41,7 @@ class Provider(Generic[R], ABC):
         self.reference = reference
         self.scope = scope
         self.thread_safe = thread_safe
-        self.supports_provider_dependencies = False
+        self.needs_nested_providers_check = False
         self._cleanup_scopes()
 
         if scope is not None:

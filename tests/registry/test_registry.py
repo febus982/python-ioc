@@ -3,9 +3,9 @@ from uuid import uuid4
 
 import pytest
 
+from ioc._registry import provider_registry, register_container, unregister_container
 from ioc.container import Container
 from ioc.providers import ObjectProvider
-from ioc.registry import _registry, register_container, unregister_container
 
 
 def test_container_registration_handles_single_modules():
@@ -17,14 +17,14 @@ def test_container_registration_handles_single_modules():
     )
     c.bind(provider)
 
-    assert (sys.modules[__name__], ref) not in _registry
+    assert (sys.modules[__name__], ref) not in provider_registry
 
     register_container(c, modules=(__name__,))
-    assert (sys.modules[__name__], ref) in _registry
-    assert _registry[(sys.modules[__name__], ref)] == (provider, c)
+    assert (sys.modules[__name__], ref) in provider_registry
+    assert provider_registry[(sys.modules[__name__], ref)] == (provider, c)
 
     unregister_container(c, modules=(__name__,))
-    assert (sys.modules[__name__], ref) not in _registry
+    assert (sys.modules[__name__], ref) not in provider_registry
 
 
 def test_container_registration_handles_single_modules_via_the_packages_param():
@@ -36,14 +36,14 @@ def test_container_registration_handles_single_modules_via_the_packages_param():
     )
     c.bind(provider)
 
-    assert (sys.modules[__name__], ref) not in _registry
+    assert (sys.modules[__name__], ref) not in provider_registry
 
     register_container(c, packages=(__name__,))
-    assert (sys.modules[__name__], ref) in _registry
-    assert _registry[(sys.modules[__name__], ref)] == (provider, c)
+    assert (sys.modules[__name__], ref) in provider_registry
+    assert provider_registry[(sys.modules[__name__], ref)] == (provider, c)
 
     unregister_container(c, modules=(__name__,))
-    assert (sys.modules[__name__], ref) not in _registry
+    assert (sys.modules[__name__], ref) not in provider_registry
 
 
 def test_container_deregistration_navigates_packages():
@@ -56,13 +56,13 @@ def test_container_deregistration_navigates_packages():
     c.bind(provider)
     register_container(c, packages=("tests.registry",))
 
-    assert (sys.modules[__name__], ref) in _registry
-    assert (sys.modules["tests.registry"], ref) in _registry
+    assert (sys.modules[__name__], ref) in provider_registry
+    assert (sys.modules["tests.registry"], ref) in provider_registry
 
     unregister_container(c, packages=("tests.registry",))
 
-    assert (sys.modules[__name__], ref) not in _registry
-    assert (sys.modules["tests.registry"], ref) not in _registry
+    assert (sys.modules[__name__], ref) not in provider_registry
+    assert (sys.modules["tests.registry"], ref) not in provider_registry
 
 
 def test_container_deregistration_handles_single_modules():
@@ -75,13 +75,13 @@ def test_container_deregistration_handles_single_modules():
     c.bind(provider)
     register_container(c, packages=("tests.registry",))
 
-    assert (sys.modules[__name__], ref) in _registry
-    assert (sys.modules["tests.registry"], ref) in _registry
+    assert (sys.modules[__name__], ref) in provider_registry
+    assert (sys.modules["tests.registry"], ref) in provider_registry
 
     unregister_container(c, modules=("tests.registry",))
 
-    assert (sys.modules[__name__], ref) in _registry
-    assert (sys.modules["tests.registry"], ref) not in _registry
+    assert (sys.modules[__name__], ref) in provider_registry
+    assert (sys.modules["tests.registry"], ref) not in provider_registry
 
 
 def test_cannot_register_same_reference_to_same_modules():
@@ -99,11 +99,11 @@ def test_cannot_register_same_reference_to_same_modules():
     )
     c2.bind(provider2)
 
-    assert (sys.modules[__name__], ref) not in _registry
+    assert (sys.modules[__name__], ref) not in provider_registry
 
     register_container(c, modules=(__name__,))
-    assert (sys.modules[__name__], ref) in _registry
-    assert _registry[(sys.modules[__name__], ref)] == (provider, c)
+    assert (sys.modules[__name__], ref) in provider_registry
+    assert provider_registry[(sys.modules[__name__], ref)] == (provider, c)
 
     # Same container
     with pytest.raises(ValueError):
@@ -141,14 +141,14 @@ def test_cannot_unregister_same_reference_with_different_container():
     c2 = Container()
     c2.bind(provider)
 
-    assert (sys.modules[__name__], ref) not in _registry
+    assert (sys.modules[__name__], ref) not in provider_registry
 
     register_container(c, modules=(__name__,))
     # reference is registered
-    assert (sys.modules[__name__], ref) in _registry
-    assert _registry[(sys.modules[__name__], ref)] == (provider, c)
+    assert (sys.modules[__name__], ref) in provider_registry
+    assert provider_registry[(sys.modules[__name__], ref)] == (provider, c)
 
     unregister_container(c2, modules=(__name__,))
     # reference is still there
-    assert (sys.modules[__name__], ref) in _registry
-    assert _registry[(sys.modules[__name__], ref)] == (provider, c)
+    assert (sys.modules[__name__], ref) in provider_registry
+    assert provider_registry[(sys.modules[__name__], ref)] == (provider, c)

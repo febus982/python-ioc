@@ -56,7 +56,7 @@ class FactoryProvider(Generic[R], Provider[R]):
         # Can we check factory callable typing returns the same type as reference?
         super().__init__(reference=reference, scope=scope, thread_safe=thread_safe)
         self.factory = factory
-        self.supports_provider_dependencies = True
+        self.needs_nested_providers_check = True
 
     def _resolve(self) -> R:
         return self.factory.callable(

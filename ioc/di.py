@@ -3,8 +3,8 @@ from inspect import _empty, getmodule, iscoroutinefunction, signature, stack
 from types import ModuleType
 from typing import Any, Callable, TypeVar, cast
 
+from ._registry import provider_registry
 from ._types import REFERENCE
-from .registry import _registry
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -24,9 +24,9 @@ def _inject_dependencies(f: F, *args, **kwargs):
         if all([
             key not in kwargs,  # Has not been passed
             sig.parameters[key].default is _empty,  # Has no default
-            (module, sig.parameters[key].annotation) in _registry
+            (module, sig.parameters[key].annotation) in provider_registry
         ]):
-            kwargs[key] = _registry[
+            kwargs[key] = provider_registry[
                 (module, sig.parameters[key].annotation)
             ][0].resolve()
 
@@ -73,7 +73,7 @@ class Require:
         # raise Exception(_registry.get((self._module, self._reference), (None,))[0])
 
         try:
-            provider = _registry[(self._module, self._reference)][0]
+            provider = provider_registry[(self._module, self._reference)][0]
         except KeyError:
             raise Exception("Reference not wired for module")
 

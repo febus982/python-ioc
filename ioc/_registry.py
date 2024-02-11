@@ -7,7 +7,7 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 from ioc._abstract import Container, Provider
 from ioc._types import REFERENCE
 
-_registry: Dict[Tuple[ModuleType, REFERENCE], Tuple[Provider, Container]] = {}
+provider_registry: Dict[Tuple[ModuleType, REFERENCE], Tuple[Provider, Container]] = {}
 
 
 def register_container(
@@ -27,7 +27,7 @@ def register_container(
     # Check no already initialised modules/packages
     intersection: Set[Tuple[ModuleType, REFERENCE]] = set(
         new_providers.keys()
-    ).intersection(_registry.keys())
+    ).intersection(provider_registry.keys())
     if intersection:
         # There might be multiple ones, but we're happy to return only one
         wired_reference = next(iter(intersection))
@@ -39,7 +39,7 @@ def register_container(
     # Register the references
     for module in resolved_modules:
         for reference, provider in container.provider_bindings.items():
-            _registry[(module, reference)] = (provider, container)
+            provider_registry[(module, reference)] = (provider, container)
 
 
 def _walk_imports(modules: Iterable[str], packages: Iterable[str]) -> List[ModuleType]:
@@ -67,8 +67,8 @@ def unregister_container(
 
     for module in resolved_modules:
         for reference, provider in container.provider_bindings.items():
-            if _registry.get((module, reference)) == (provider, container):
-                del _registry[(module, reference)]
+            if provider_registry.get((module, reference)) == (provider, container):
+                del provider_registry[(module, reference)]
             else:
                 logging.warning(f"Ignored attempt to unregister reference {reference}"
                                 f" for module {module} using a different container"

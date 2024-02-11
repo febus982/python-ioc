@@ -4,8 +4,8 @@ from ._abstract import (
     Container as AbstractContainer,
 )
 from ._abstract import Provider
+from ._registry import register_container, unregister_container
 from ._types import REFERENCE, R
-from .registry import register_container, unregister_container
 
 
 class Container(AbstractContainer):
@@ -27,7 +27,7 @@ class Container(AbstractContainer):
         if provider.reference in self.provider_bindings:
             raise Exception("Binding already registered")
 
-        if provider.supports_provider_dependencies:
+        if provider.needs_nested_providers_check:
             provider.validate_nested_dependencies(self)
 
         self.provider_bindings[provider.reference] = provider
