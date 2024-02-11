@@ -37,8 +37,6 @@ class ObjectProvider(Generic[R], Provider[R]):
         super().__init__(reference=reference, scope=scope, thread_safe=thread_safe)
 
         self.target = target
-        if scope is not None:
-            scope_terminated.connect(self._cleanup_scopes, sender=scope)
 
     def _resolve(self) -> R:
         return self.target

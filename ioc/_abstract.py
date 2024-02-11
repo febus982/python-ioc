@@ -23,6 +23,7 @@ class Provider(Generic[R], ABC):
         "needs_nested_providers_check",
         "_scoped_instance",
         "_threadlocal_instance",
+        "__weakref__",
     )
     scope: Optional[str]
     reference: REFERENCE
@@ -43,6 +44,8 @@ class Provider(Generic[R], ABC):
         self.thread_safe = thread_safe
         self.needs_nested_providers_check = False
         self._cleanup_scopes()
+        if scope is not None:
+            scope_terminated.connect(self._cleanup_scopes, sender=scope)
 
     def resolve(self) -> R:
         if self.scope:
