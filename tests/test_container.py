@@ -6,6 +6,7 @@ import pytest
 
 from ioc._abstract import Provider
 from ioc.container import Container
+from ioc.providers import ObjectProvider, FactoryProvider
 
 
 class SomeProvider(Provider):
@@ -21,18 +22,19 @@ class SomeProvider(Provider):
 
 
 def test_cannot_bind_twice_the_same_reference():
+    ref = str(uuid4())
     c = Container()
-    c.bind(
+    c._bind(
         SomeProvider(
-            "scoped",
+            ref,
             "unused_var",
             "some_scope",
         ),
     )
     with pytest.raises(Exception):
-        c.bind(
+        c._bind(
             SomeProvider(
-                "scoped",
+                ref,
                 "another_var",
             ),
         )
@@ -45,7 +47,7 @@ def test_resolve_calls_provider_resolver():
         "unused_var",
         "some_scope",
     )
-    c.bind(p)
+    c._bind(p)
     with patch.object(p, "resolve") as mock_resolve:
         c.resolve("scoped")
         mock_resolve.assert_called_once()
@@ -83,3 +85,42 @@ def test_unwire_unregisters_container_from_registry():
     mock_unregister_container.assert_called_once_with(
         container=c, modules=(), packages=()
     )
+
+
+def test_bind_object_binds_object_provider():
+    ref = str(uuid4())
+    c = Container()
+    with patch.object(c, "_bind", return_value=None) as mock_bind:
+        c.bind_object(
+            ref,
+            "unused_var",
+        )
+
+    mock_bind.assert_called_once()
+    assert isinstance(mock_bind.call_args[0][0], ObjectProvider)
+    c.bind_object(
+        ref,
+        "unused_var",
+    )
+    assert isinstance(c.provider_bindings[ref], ObjectProvider)
+    assert c.provider_bindings[ref].reference == ref
+    assert c.provider_bindings[ref].resolve() == "unused_var"
+
+
+def test_bind_factory_binds_factory_provider():
+    ref = str(uuid4())
+    c = Container()
+    with patch.object(c, "_bind", return_value=None) as mock_bind:
+        c.bind_factory(
+            ref,
+            lambda: "some_value",
+        )
+
+    mock_bind.assert_called_once()
+    assert isinstance(mock_bind.call_args[0][0], FactoryProvider)
+    c.bind_factory(
+        ref,
+        lambda: "some_value",
+    )
+    assert c.provider_bindings[ref].reference == ref
+    assert c.provider_bindings[ref].resolve() == "some_value"

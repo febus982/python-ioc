@@ -40,13 +40,13 @@ def test_container_allows_binding_only_if_dependencies_are_registered():
     )
 
     with pytest.raises(Exception):
-        c.bind(f)
+        c._bind(f)
     with pytest.raises(Exception):
-        c.bind(f2)
+        c._bind(f2)
 
-    c.bind(o)
-    c.bind(f)
-    c.bind(f2)
+    c._bind(o)
+    c._bind(f)
+    c._bind(f2)
     assert c.provide("ref2") is f
     assert c.provide("ref3") is f2
 
@@ -57,7 +57,7 @@ def test_factory_without_dependencies_are_registered():
         "ref",
         Factory(callable=lambda: 1, ),
     )
-    c.bind(f)
+    c._bind(f)
     assert c.provide("ref") is f
 
 
@@ -72,9 +72,9 @@ def test_factory_resolution():
         MyClassInterface,
         Factory(callable=MyClass, args=(o,)),
     )
-    c.bind(o)
-    c.bind(factory_function)
-    c.bind(factory_class)
+    c._bind(o)
+    c._bind(factory_function)
+    c._bind(factory_class)
     assert c.resolve("ref2") == "scope"
     result = c.resolve(MyClassInterface)
     assert isinstance(result, MyClass)

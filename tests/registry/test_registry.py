@@ -15,7 +15,7 @@ def test_container_registration_handles_single_modules():
         ref,
         "value",
     )
-    c.bind(provider)
+    c._bind(provider)
 
     assert (sys.modules[__name__], ref) not in provider_registry
 
@@ -34,7 +34,7 @@ def test_container_registration_handles_single_modules_via_the_packages_param():
         ref,
         "value",
     )
-    c.bind(provider)
+    c._bind(provider)
 
     assert (sys.modules[__name__], ref) not in provider_registry
 
@@ -53,7 +53,7 @@ def test_container_deregistration_navigates_packages():
         str(ref),
         "value",
     )
-    c.bind(provider)
+    c._bind(provider)
     register_container(c, packages=("tests.registry",))
 
     assert (sys.modules[__name__], ref) in provider_registry
@@ -72,7 +72,7 @@ def test_container_deregistration_handles_single_modules():
         ref,
         "value",
     )
-    c.bind(provider)
+    c._bind(provider)
     register_container(c, packages=("tests.registry",))
 
     assert (sys.modules[__name__], ref) in provider_registry
@@ -91,13 +91,13 @@ def test_cannot_register_same_reference_to_same_modules():
         ref,
         "value",
     )
-    c.bind(provider)
+    c._bind(provider)
     c2 = Container()
     provider2 = ObjectProvider(
         ref,
         "another_value",
     )
-    c2.bind(provider2)
+    c2._bind(provider2)
 
     assert (sys.modules[__name__], ref) not in provider_registry
 
@@ -121,7 +121,7 @@ def test_cannot_register_using_relative_imports():
         ref,
         "value",
     )
-    c.bind(provider)
+    c._bind(provider)
 
     with pytest.raises(ImportError):
         register_container(c, modules=("../test_scopes.py",))
@@ -137,9 +137,9 @@ def test_cannot_unregister_same_reference_with_different_container():
         ref,
         "value",
     )
-    c.bind(provider)
+    c._bind(provider)
     c2 = Container()
-    c2.bind(provider)
+    c2._bind(provider)
 
     assert (sys.modules[__name__], ref) not in provider_registry
 

@@ -21,7 +21,7 @@ class Concrete2(Interface):
 
 async def test_inject_using_interface():
     c = Container()
-    c.bind(
+    c._bind(
         FactoryProvider(
             Interface,
             Factory(
@@ -76,7 +76,7 @@ async def test_injector():
     # to make sure we don't wire multiple times
     # against this module if tests run in parallel
     c = Container()
-    c.bind(
+    c._bind(
         ObjectProvider(
             "ref",
             "obj",

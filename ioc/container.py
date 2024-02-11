@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, Type, overload
+from typing import Any, Callable, Dict, Iterable, Optional, Type, overload
 
 from ._abstract import (
     Container as AbstractContainer,
@@ -6,6 +6,7 @@ from ._abstract import (
 from ._abstract import Provider
 from ._registry import register_container, unregister_container
 from ._types import REFERENCE, R
+from .providers import Factory, FactoryProvider, ObjectProvider
 
 
 class Container(AbstractContainer):
@@ -17,13 +18,8 @@ class Container(AbstractContainer):
     c = Container()
     c.bind(ClassInterface, Provider(...), life_scope="singleton")
     """
-    __slots__ = "provider_bindings"
-    provider_bindings: Dict[REFERENCE, Provider]
 
-    def __init__(self):
-        self.provider_bindings = {}
-
-    def bind(self, provider: Provider) -> None:
+    def _bind(self, provider: Provider) -> None:
         if provider.reference in self.provider_bindings:
             raise Exception("Binding already registered")
 
@@ -32,6 +28,43 @@ class Container(AbstractContainer):
 
         self.provider_bindings[provider.reference] = provider
 
+    def bind_object(
+        self,
+        reference: REFERENCE,
+        obj: Any,
+        _scope: Optional[str] = None,
+        _threads: bool = False,
+    ) -> None:
+        if reference in self.provider_bindings:
+            raise Exception("Reference already registered")
+
+        self._bind(ObjectProvider(reference, obj, _scope, _threads))
+
+    def bind_factory(
+        self,
+        reference: REFERENCE,
+        factory: Callable[..., R],
+        *args: Any,
+        _scope: Optional[str] = None,
+        _threads: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        if reference in self.provider_bindings:
+            raise Exception("Reference already registered")
+
+        f = Factory(
+            callable=factory,
+            args=args,
+            kwargs=kwargs,
+        )
+        self._bind(FactoryProvider(
+            # MyPy error: incompatible type "str | type[Any]"; expected "str"
+            reference=reference,  # type: ignore
+            factory=f,
+            scope=_scope,
+            thread_safe=_threads,
+        ))
+
     @overload
     def resolve(self, reference: str) -> Any: ...
 
@@ -39,15 +72,16 @@ class Container(AbstractContainer):
     def resolve(self, reference: Type[R]) -> R: ...
 
     def resolve(self, reference):
-        return self.provide(reference).resolve()
+        return self._resolve_reference(reference).resolve()
 
-    def provide(self, reference) -> Provider:
+    def _resolve_reference(self, reference: str) -> Provider:
         try:
-            provider = self.provider_bindings[reference]
+            return self.provider_bindings[reference]
         except KeyError:
             raise Exception("Binding not found")
 
-        return provider
+    def provide(self, reference) -> Provider:
+        return self._resolve_reference(reference)
 
     def wire(
         self,

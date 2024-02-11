@@ -7,7 +7,7 @@ from typing import (
     Optional,
     Set,
     Type,
-    overload,
+    overload, Callable,
 )
 
 from ._signals import scope_terminated
@@ -82,12 +82,37 @@ class Provider(Generic[R], ABC):
 
 
 class Container(ABC):
+    __slots__ = "provider_bindings", "modules", "packages"
     provider_bindings: Dict[REFERENCE, Provider]
-    modules: Set[str] = set()
-    packages: Set[str] = set()
+    modules: Set[str]
+    packages: Set[str]
+
+    def __init__(self):
+        self.provider_bindings = {}
+        self.modules = set()
+        self.packages = set()
 
     @abstractmethod
-    def bind(self, provider: Provider) -> None: ...
+    def bind_object(
+        self,
+        reference: REFERENCE,
+        obj: Any,
+        _scope: Optional[str] = None,
+        _threads: bool = False,
+    ) -> None:
+        ...
+
+    @abstractmethod
+    def bind_factory(
+        self,
+        reference: REFERENCE,
+        factory: Callable[..., R],
+        *args: Any,
+        _scope: Optional[str] = None,
+        _threads: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        ...
 
     @overload
     def resolve(self, reference: str) -> Any: ...
